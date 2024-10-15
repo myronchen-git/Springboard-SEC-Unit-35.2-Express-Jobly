@@ -5,7 +5,7 @@
 const jwt = require('jsonwebtoken');
 
 const { SECRET_KEY } = require('../config');
-const { UnauthorizedError } = require('../expressError');
+const { UnauthorizedError, ForbiddenError } = require('../expressError');
 
 // ==================================================
 
@@ -44,9 +44,44 @@ function ensureLoggedIn(req, res, next) {
   }
 }
 
+/**
+ * Middleware to ensure that the logged in user is an admin.
+ *
+ * If not, raises ForbiddenError.
+ */
+function ensureAdmin(req, res, next) {
+  try {
+    if (!res.locals.user.isAdmin) throw new ForbiddenError();
+    return next();
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * Middleware to ensure that the logged in user is an admin or the user in the
+ * URL path parameter.
+ *
+ * If not, raises ForbiddenError.
+ */
+function ensureAdminOrSelf(req, res, next) {
+  try {
+    if (
+      !res.locals.user.isAdmin &&
+      req.params.username !== res.locals.user.username
+    )
+      throw new ForbiddenError();
+    return next();
+  } catch (err) {
+    return next(err);
+  }
+}
+
 // ==================================================
 
 module.exports = {
   authenticateJWT,
   ensureLoggedIn,
+  ensureAdmin,
+  ensureAdminOrSelf,
 };

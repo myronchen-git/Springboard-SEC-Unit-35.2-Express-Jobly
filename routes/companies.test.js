@@ -11,6 +11,7 @@ const {
   commonAfterEach,
   commonAfterAll,
   u1Token,
+  u2Token,
 } = require('./_testCommon');
 
 // ==================================================
@@ -23,15 +24,15 @@ afterAll(commonAfterAll);
 /************************************** POST /companies */
 
 describe('POST /companies', function () {
-  const newCompany = {
+  const newCompany = Object.freeze({
     handle: 'new',
     name: 'New',
     logoUrl: 'http://new.img',
     description: 'DescNew',
     numEmployees: 10,
-  };
+  });
 
-  test('ok for users', async function () {
+  test('ok for admins', async function () {
     const resp = await request(app)
       .post('/companies')
       .send(newCompany)
@@ -40,6 +41,20 @@ describe('POST /companies', function () {
     expect(resp.body).toEqual({
       company: newCompany,
     });
+  });
+
+  test('forbidden if not admin', async function () {
+    // Arrange
+    const url = '/companies';
+
+    // Act
+    const resp = await request(app)
+      .post(url)
+      .send(newCompany)
+      .set('authorization', `Bearer ${u2Token}`);
+
+    // Assert
+    expect(resp.statusCode).toEqual(403);
   });
 
   test('bad request with missing data', async function () {
@@ -220,7 +235,7 @@ describe('GET /companies/:handle', function () {
 /************************************** PATCH /companies/:handle */
 
 describe('PATCH /companies/:handle', function () {
-  test('works for users', async function () {
+  test('works for admins', async function () {
     const resp = await request(app)
       .patch(`/companies/c1`)
       .send({
@@ -243,6 +258,21 @@ describe('PATCH /companies/:handle', function () {
       name: 'C1-new',
     });
     expect(resp.statusCode).toEqual(401);
+  });
+
+  test('forbidden if not admin', async function () {
+    // Arrange
+    const url = '/companies/c1';
+    const body = { name: 'C1-new' };
+
+    // Act
+    const resp = await request(app)
+      .patch(url)
+      .send(body)
+      .set('authorization', `Bearer ${u2Token}`);
+
+    // Assert
+    expect(resp.statusCode).toEqual(403);
   });
 
   test('not found on no such company', async function () {
@@ -279,7 +309,7 @@ describe('PATCH /companies/:handle', function () {
 /************************************** DELETE /companies/:handle */
 
 describe('DELETE /companies/:handle', function () {
-  test('works for users', async function () {
+  test('works for admins', async function () {
     const resp = await request(app)
       .delete(`/companies/c1`)
       .set('authorization', `Bearer ${u1Token}`);
@@ -289,6 +319,19 @@ describe('DELETE /companies/:handle', function () {
   test('unauth for anon', async function () {
     const resp = await request(app).delete(`/companies/c1`);
     expect(resp.statusCode).toEqual(401);
+  });
+
+  test('forbidden if not admin', async function () {
+    // Arrange
+    const url = '/companies/c1';
+
+    // Act
+    const resp = await request(app)
+      .delete(url)
+      .set('authorization', `Bearer ${u2Token}`);
+
+    // Assert
+    expect(resp.statusCode).toEqual(403);
   });
 
   test('not found for no such company', async function () {
