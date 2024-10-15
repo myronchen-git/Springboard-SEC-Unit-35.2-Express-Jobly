@@ -68,34 +68,65 @@ describe('POST /companies', function () {
 /************************************** GET /companies */
 
 describe('GET /companies', function () {
+  const companies = Object.freeze([
+    Object.freeze({
+      handle: 'c1',
+      name: 'C1',
+      description: 'Desc1',
+      numEmployees: 1,
+      logoUrl: 'http://c1.img',
+    }),
+    Object.freeze({
+      handle: 'c2',
+      name: 'C2',
+      description: 'Desc2',
+      numEmployees: 2,
+      logoUrl: 'http://c2.img',
+    }),
+    Object.freeze({
+      handle: 'c3',
+      name: 'C3',
+      description: 'Desc3',
+      numEmployees: 3,
+      logoUrl: 'http://c3.img',
+    }),
+  ]);
+
   test('ok for anon', async function () {
     const resp = await request(app).get('/companies');
-    expect(resp.body).toEqual({
-      companies: [
-        {
-          handle: 'c1',
-          name: 'C1',
-          description: 'Desc1',
-          numEmployees: 1,
-          logoUrl: 'http://c1.img',
-        },
-        {
-          handle: 'c2',
-          name: 'C2',
-          description: 'Desc2',
-          numEmployees: 2,
-          logoUrl: 'http://c2.img',
-        },
-        {
-          handle: 'c3',
-          name: 'C3',
-          description: 'Desc3',
-          numEmployees: 3,
-          logoUrl: 'http://c3.img',
-        },
-      ],
-    });
+    expect(resp.body).toEqual({ companies });
   });
+
+  test.each([
+    ['/companies?nameLike=c2', [companies[1]]],
+    ['/companies?nameLike=c&minEmployees=3&maxEmployees=10', [companies[2]]],
+  ])(
+    'works with query parameters; test case: %s',
+    async function (url, expectedCompanies) {
+      // Act
+      const resp = await request(app).get(url);
+
+      // Assert
+      expect(resp.statusCode).toBe(200);
+      expect(resp.body).toEqual({ companies: expectedCompanies });
+    }
+  );
+
+  test.each([
+    ['/companies?handle=c1', companies],
+    ['/companies?description=Desc1', companies],
+    ['/companies?handle=c&description=Desc1', companies],
+  ])(
+    'does not filter other company properties; test case: %#',
+    async function (url, listOfCompanies) {
+      // Act
+      const resp = await request(app).get(url);
+
+      // Assert
+      expect(resp.statusCode).toBe(200);
+      expect(resp.body).toEqual({ companies: listOfCompanies });
+    }
+  );
 
   test('fails: test next() handler', async function () {
     // there's no normal failure event which will cause this route to fail ---
@@ -106,6 +137,48 @@ describe('GET /companies', function () {
       .get('/companies')
       .set('authorization', `Bearer ${u1Token}`);
     expect(resp.statusCode).toEqual(500);
+  });
+
+  test('fails: if minEmployees > maxEmployees', async function () {
+    // Arrange
+    const url = '/companies?minEmployees=9&maxEmployees=1';
+
+    // Act
+    const resp = await request(app).get(url);
+
+    // Assert
+    expect(resp.statusCode).toBe(400);
+  });
+
+  test.each([
+    ['/companies?minEmployees=a'],
+    ['/companies?minEmployees=-2'],
+    ['/companies?minEmployees=2147483648'],
+    ['/companies?minEmployees=1.5'],
+    ['/companies?maxEmployees=a'],
+    ['/companies?maxEmployees=-2'],
+    ['/companies?maxEmployees=2147483648'],
+    ['/companies?maxEmployees=1.5'],
+  ])(
+    'fails: minEmployees or maxEmployees are not positive integers; test case: %s',
+    async function (url) {
+      // Act
+      const resp = await request(app).get(url);
+
+      // Assert
+      expect(resp.statusCode).toBe(400);
+    }
+  );
+
+  test('fails: nameLike can not be decoded from URL', async function () {
+    // Arrange
+    const url = '/companies?nameLike=c%';
+
+    // Act
+    const resp = await request(app).get(url);
+
+    // Assert
+    expect(resp.statusCode).toBe(400);
   });
 });
 

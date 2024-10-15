@@ -7,6 +7,9 @@ const express = require('express');
 
 const { BadRequestError } = require('../expressError');
 const { ensureLoggedIn } = require('../middleware/auth');
+const {
+  convertGetAllCompaniesQueryParameters,
+} = require('../middleware/companies');
 const Company = require('../models/company');
 
 const companyNewSchema = require('../schemas/companyNew.json');
@@ -51,14 +54,18 @@ router.post('/', ensureLoggedIn, async function (req, res, next) {
  * Authorization required: none
  */
 
-router.get('/', async function (req, res, next) {
-  try {
-    const companies = await Company.findAll();
-    return res.json({ companies });
-  } catch (err) {
-    return next(err);
+router.get(
+  '/',
+  convertGetAllCompaniesQueryParameters,
+  async function (req, res, next) {
+    try {
+      const companies = await Company.findAll(req.query);
+      return res.json({ companies });
+    } catch (err) {
+      return next(err);
+    }
   }
-});
+);
 
 /** GET /[handle]  =>  { company }
  *

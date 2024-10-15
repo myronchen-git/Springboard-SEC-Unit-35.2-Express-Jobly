@@ -2,7 +2,10 @@
 
 const db = require('../db');
 const { BadRequestError, NotFoundError } = require('../expressError');
-const { sqlForPartialUpdate } = require('../helpers/sql');
+const {
+  sqlForPartialUpdate,
+  sqlWhereClauseForGetCompanies,
+} = require('../helpers/sql');
 
 // ==================================================
 
@@ -43,19 +46,26 @@ class Company {
 
   /** Find all companies.
    *
+   * Filters should be
+   * { nameLike: String, minEmployees: Number, maxEmployees: Number }.
+   *
    * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    * */
 
-  static async findAll() {
-    const companiesRes = await db.query(
-      `SELECT handle,
-                  name,
-                  description,
-                  num_employees AS "numEmployees",
-                  logo_url AS "logoUrl"
-           FROM companies
-           ORDER BY name`
-    );
+  static async findAll(filters) {
+    let querySql = `SELECT handle,
+                        name,
+                        description,
+                        num_employees AS "numEmployees",
+                        logo_url AS "logoUrl"
+                      FROM companies`;
+
+    const { whereClause, values } = sqlWhereClauseForGetCompanies(filters);
+
+    querySql += whereClause;
+    querySql += ' ORDER BY name';
+
+    const companiesRes = await db.query(querySql, values);
     return companiesRes.rows;
   }
 

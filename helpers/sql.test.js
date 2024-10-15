@@ -1,6 +1,6 @@
 'use strict';
 
-const { sqlForPartialUpdate } = require('./sql');
+const { sqlForPartialUpdate, sqlWhereClauseForGetCompanies } = require('./sql');
 const { BadRequestError } = require('../expressError');
 
 // ==================================================
@@ -68,6 +68,66 @@ describe('sqlForPartialUpdate', () => {
 
     // Act / Assert
     expect(() => sqlForPartialUpdate(dataToUpdate, jsToSql)).toThrow(
+      BadRequestError
+    );
+  });
+});
+
+describe('sqlWhereClauseForGetCompanies', () => {
+  test.each([
+    [{}, { whereClause: '', values: [] }],
+    [
+      { nameLike: 'net' },
+      { whereClause: ' WHERE name ILIKE $1', values: ['%net%'] },
+    ],
+    [
+      { nameLike: 'Study Networks' },
+      { whereClause: ' WHERE name ILIKE $1', values: ['%Study Networks%'] },
+    ],
+    [
+      { minEmployees: 2 },
+      { whereClause: ' WHERE num_employees >= $1', values: [2] },
+    ],
+    [
+      { maxEmployees: 10 },
+      { whereClause: ' WHERE num_employees <= $1', values: [10] },
+    ],
+    [
+      { nameLike: 'net', minEmployees: 2, maxEmployees: 10 },
+      {
+        whereClause:
+          ' WHERE name ILIKE $1 AND num_employees >= $2 AND num_employees <= $3',
+        values: ['%net%', 2, 10],
+      },
+    ],
+  ])(
+    'Outputs the correct SQL String to use in the WHERE clause for test case %#.',
+    (filters, expected) => {
+      // Act
+      const result = sqlWhereClauseForGetCompanies(filters);
+
+      // Assert
+      expect(result).toEqual(expected);
+    }
+  );
+
+  test('Does not filter other company properties.', () => {
+    // Arrange
+    const filters = { handle: 'abc' };
+
+    // Act
+    const result = sqlWhereClauseForGetCompanies(filters);
+
+    // Assert
+    expect(result).toEqual({ whereClause: '', values: [] });
+  });
+
+  test('If minEmployees > maxEmployees, it should throw an error.', () => {
+    // Arrange
+    const filters = { minEmployees: 20, maxEmployees: 10 };
+
+    // Act / Assert
+    expect(() => sqlWhereClauseForGetCompanies(filters)).toThrow(
       BadRequestError
     );
   });

@@ -33,6 +33,53 @@ function sqlForPartialUpdate(dataToUpdate, jsToSql) {
   };
 }
 
+/**
+ * Builds the SQL WHERE clause, used for search filtering, when retrieving the
+ * list of all companies.  Only builds filters for some company properties and
+ * ignores the rest.
+ *
+ * @param {Object} filters The search filters to use for getting all companies.
+ *   Keys can be nameLike, minEmployees, or maxEmployees.
+ * @returns {String, Array} The SQL WHERE clause to use in a SQL statement.
+ *   An Array with values to use in conjunction with the String.
+ * @throws BadRequestError If minEmployees > maxEmployees.
+ */
+function sqlWhereClauseForGetCompanies(filters) {
+  const clauses = [];
+  const values = [];
+  let idx = 1;
+
+  if (
+    filters.minEmployees &&
+    filters.maxEmployees &&
+    filters.minEmployees > filters.maxEmployees
+  ) {
+    throw new BadRequestError(
+      'Minimum number of employees can not be greater than maximum.'
+    );
+  }
+
+  if (filters.nameLike) {
+    clauses.push(`name ILIKE $${idx++}`);
+    values.push(`%${filters.nameLike}%`);
+  }
+
+  if (filters.minEmployees) {
+    clauses.push(`num_employees >= $${idx++}`);
+    values.push(filters.minEmployees);
+  }
+
+  if (filters.maxEmployees) {
+    clauses.push(`num_employees <= $${idx++}`);
+    values.push(filters.maxEmployees);
+  }
+
+  const whereClause =
+    clauses.length > 0 ? ' WHERE ' + clauses.join(' AND ') : '';
+
+  return { whereClause, values };
+}
+
 // ==================================================
 
-module.exports = { sqlForPartialUpdate };
+module.exports = { sqlForPartialUpdate, sqlWhereClauseForGetCompanies };

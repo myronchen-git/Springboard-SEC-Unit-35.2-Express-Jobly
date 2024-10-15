@@ -63,7 +63,7 @@ describe('create', function () {
 
 describe('findAll', function () {
   test('works: no filter', async function () {
-    let companies = await Company.findAll();
+    let companies = await Company.findAll({});
     expect(companies).toEqual([
       {
         handle: 'c1',
@@ -87,6 +87,97 @@ describe('findAll', function () {
         logoUrl: 'http://c3.img',
       },
     ]);
+  });
+
+  test.each([
+    [
+      { nameLike: '2' },
+      [
+        {
+          handle: 'c2',
+          name: 'C2',
+          description: 'Desc2',
+          numEmployees: 2,
+          logoUrl: 'http://c2.img',
+        },
+      ],
+    ],
+    [
+      { nameLike: 'c2' },
+      [
+        {
+          handle: 'c2',
+          name: 'C2',
+          description: 'Desc2',
+          numEmployees: 2,
+          logoUrl: 'http://c2.img',
+        },
+      ],
+    ],
+    [
+      { minEmployees: 2 },
+      [
+        {
+          handle: 'c2',
+          name: 'C2',
+          description: 'Desc2',
+          numEmployees: 2,
+          logoUrl: 'http://c2.img',
+        },
+        {
+          handle: 'c3',
+          name: 'C3',
+          description: 'Desc3',
+          numEmployees: 3,
+          logoUrl: 'http://c3.img',
+        },
+      ],
+    ],
+    [
+      { maxEmployees: 1 },
+      [
+        {
+          handle: 'c1',
+          name: 'C1',
+          description: 'Desc1',
+          numEmployees: 1,
+          logoUrl: 'http://c1.img',
+        },
+      ],
+    ],
+  ])('works: one filter, case %#', async function (filters, expected) {
+    // Act
+    const companies = await Company.findAll(filters);
+
+    // Assert
+    expect(companies).toEqual(expected);
+  });
+
+  test('works: multiple filters', async function () {
+    // Arrange
+    const filters = { nameLike: 'c', minEmployees: 3, maxEmployees: 10 };
+
+    // Act
+    const companies = await Company.findAll(filters);
+
+    // Assert
+    expect(companies).toEqual([
+      {
+        handle: 'c3',
+        name: 'C3',
+        description: 'Desc3',
+        numEmployees: 3,
+        logoUrl: 'http://c3.img',
+      },
+    ]);
+  });
+
+  test('bad request when min employees > max', async function () {
+    // Arrange
+    const filters = { minEmployees: 9, maxEmployees: 1 };
+
+    // Act / Assert
+    await expect(Company.findAll(filters)).rejects.toThrow(BadRequestError);
   });
 });
 
