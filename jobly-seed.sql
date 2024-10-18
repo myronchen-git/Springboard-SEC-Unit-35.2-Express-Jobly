@@ -368,3 +368,27 @@ VALUES ('Conservator, furniture', 110000, 0, 'watson-davis'),
        ('Learning disability nurse', 66000, NULL, 'ayala-buchanan'),
        ('Research scientist (medical)', 175000, NULL, 'norman-harvey'),
        ('Accommodation manager', 126000, NULL, 'mejia-scott-ryan');
+
+INSERT INTO technologies (name)
+VALUES ('Python'),
+        ('JavaScript'),
+        ('Java'),
+        ('Flask'),
+        ('Node'),
+        ('Express');
+
+INSERT INTO jobs_technologies (job_id, tech_id)
+VALUES (33, 1),
+        (33, 2),
+        (72, 1),
+        (72, 2),
+        (72, 3),
+        (72, 4),
+        (72, 5),
+        (72, 6),
+        (177, 1),
+        (177, 2),
+        (177, 3),
+        (177, 4),
+        (177, 5),
+        (177, 6);
