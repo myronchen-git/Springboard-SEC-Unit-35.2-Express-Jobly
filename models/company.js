@@ -72,28 +72,43 @@ class Company {
   /** Given a company handle, return data about company.
    *
    * Returns { handle, name, description, numEmployees, logoUrl, jobs }
-   *   where jobs is [{ id, title, salary, equity, companyHandle }, ...]
+   *   where jobs is [{ id, title, salary, equity }, ...]
    *
    * Throws NotFoundError if not found.
    **/
 
   static async get(handle) {
     const companyRes = await db.query(
-      `SELECT handle,
-                  name,
-                  description,
-                  num_employees AS "numEmployees",
-                  logo_url AS "logoUrl"
-           FROM companies
-           WHERE handle = $1`,
+      `SELECT c.name,
+              c.description,
+              c.num_employees AS "numEmployees",
+              c.logo_url AS "logoUrl",
+              j.id,
+              j.title,
+              j.salary,
+              j.equity
+      FROM companies AS c
+      LEFT JOIN jobs AS j ON c.handle = j.company_handle
+      WHERE handle = $1`,
       [handle]
     );
 
-    const company = companyRes.rows[0];
+    if (companyRes.rowCount === 0)
+      throw new NotFoundError(`No company: ${handle}`);
 
-    if (!company) throw new NotFoundError(`No company: ${handle}`);
+    const { name, description, numEmployees, logoUrl } = companyRes.rows[0];
 
-    return company;
+    let jobs = [];
+    if (companyRes.rows[0].id) {
+      jobs = companyRes.rows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        salary: r.salary,
+        equity: r.equity === null ? null : Number(r.equity),
+      }));
+    }
+
+    return { handle, name, description, numEmployees, logoUrl, jobs };
   }
 
   /** Update company data with `data`.
