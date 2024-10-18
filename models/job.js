@@ -2,7 +2,10 @@
 
 const db = require('../db');
 const { BadRequestError, NotFoundError } = require('../expressError');
-const { sqlForPartialUpdate } = require('../helpers/sql');
+const {
+  sqlForPartialUpdate,
+  sqlWhereClauseForGetJobs,
+} = require('../helpers/sql');
 
 // ==================================================
 
@@ -56,14 +59,19 @@ class Job {
   /**
    * Finds all jobs.
    *
+   * Filters should be
+   * { title: String, minSalary: Number, hasEquity: Boolean }.
+   *
    * @returns [{ id, title, salary, equity, companyHandle }, ...]
    */
-  static async findAll() {
-    const querySql = `
+  static async findAll(filters) {
+    let querySql = `
       SELECT id, title, salary, equity, company_handle AS "companyHandle"
       FROM jobs`;
+    const { whereClause, values } = sqlWhereClauseForGetJobs(filters);
+    querySql += whereClause;
 
-    const jobsResult = await db.query(querySql);
+    const jobsResult = await db.query(querySql, values);
 
     const jobs = jobsResult.rows.map((job) => {
       if (job.equity !== null) {

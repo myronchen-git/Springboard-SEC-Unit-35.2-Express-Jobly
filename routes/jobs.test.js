@@ -147,6 +147,40 @@ describe('GET /jobs', function () {
     expect(resp.body).toEqual({ jobs });
   });
 
+  test.each([
+    ['/jobs?title=J1', [jobs[0]]],
+    ['/jobs?title=2', [jobs[1]]],
+    ['/jobs?minSalary=10', [jobs[1], jobs[2]]],
+    ['/jobs?hasEquity=true', [jobs[0], jobs[1]]],
+    ['/jobs?title=J&minSalary=1000&hasEquity=FALSE', [jobs[2]]],
+  ])(
+    'works with query parameters; test case: %s',
+    async function (url, expectedJobs) {
+      // Act
+      const resp = await request(app).get(url);
+
+      // Assert
+      expect(resp.statusCode).toBe(200);
+      expect(resp.body).toEqual({ jobs: expectedJobs });
+    }
+  );
+
+  test.each([
+    ['/jobs?id=1', jobs],
+    ['/jobs?companyHandle=c1', jobs],
+    ['/jobs?id=9&companyHandle=c1&title=j1', [jobs[0]]],
+  ])(
+    'does not filter other company properties; test case: %#',
+    async function (url, expectedJobs) {
+      // Act
+      const resp = await request(app).get(url);
+
+      // Assert
+      expect(resp.statusCode).toBe(200);
+      expect(resp.body).toEqual({ jobs: expectedJobs });
+    }
+  );
+
   test('fails: test next() handler', async function () {
     // there's no normal failure event which will cause this route to fail ---
     // thus making it hard to test that the error-handler works with it. This
@@ -156,6 +190,47 @@ describe('GET /jobs', function () {
       .get(url)
       .set('authorization', `Bearer ${u1Token}`);
     expect(resp.statusCode).toEqual(500);
+  });
+
+  test('fails: title can not be decoded from URL', async function () {
+    // Arrange
+    const url = '/jobs?title=j%';
+
+    // Act
+    const resp = await request(app).get(url);
+
+    // Assert
+    expect(resp.statusCode).toBe(400);
+  });
+
+  test.each([
+    ['/jobs?minSalary=a'],
+    ['/jobs?minSalary=-2'],
+    ['/jobs?minSalary=2147483648'],
+    ['/jobs?minSalary=1.5'],
+  ])(
+    'fails: minSalary is not a positive integer; test case: %s',
+    async function (url) {
+      // Act
+      const resp = await request(app).get(url);
+
+      // Assert
+      expect(resp.statusCode).toBe(400);
+    }
+  );
+
+  test.each([
+    ['/jobs?hasEquity=a'],
+    ['/jobs?hasEquity=t'],
+    ['/jobs?hasEquity=1'],
+    ['/jobs?hasEquity=f'],
+    ['/jobs?hasEquity=0'],
+  ])('fails: hasEquity is not a boolean', async function (url) {
+    // Act
+    const resp = await request(app).get(url);
+
+    // Assert
+    expect(resp.statusCode).toBe(400);
   });
 });
 

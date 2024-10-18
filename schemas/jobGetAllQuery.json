@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "http://example.com/example.json",
+  "type": "object",
+  "default": {},
+  "required": [],
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 90,
+      "examples": ["j1"]
+    },
+    "minSalary": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647,
+      "examples": [0]
+    },
+    "hasEquity": {
+      "type": "boolean",
+      "default": false,
+      "examples": [true]
+    }
+  },
+  "examples": [
+    {
+      "title": "j1",
+      "minSalary": 0,
+      "hasEquity": true
+    }
+  ]
+}

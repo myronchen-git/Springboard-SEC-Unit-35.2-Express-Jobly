@@ -80,6 +80,46 @@ function sqlWhereClauseForGetCompanies(filters) {
   return { whereClause, values };
 }
 
+/**
+ * Builds the SQL WHERE clause, used for search filtering, when retrieving the
+ * list of all jobs.  Only builds filters for some job properties and
+ * ignores the rest.
+ *
+ * @param {Object} filters The search filters to use for getting all jobs.
+ *   Keys can be title, minSalary, or hasEquity.
+ * @returns {String, Array} The SQL WHERE clause to use in a SQL statement.
+ *   An Array with values to use in conjunction with the String.
+ */
+function sqlWhereClauseForGetJobs(filters) {
+  const clauses = [];
+  const values = [];
+  let idx = 1;
+
+  if (filters.title) {
+    clauses.push(`title ILIKE $${idx++}`);
+    values.push(`%${filters.title}%`);
+  }
+
+  if (filters.minSalary) {
+    clauses.push(`salary >= $${idx++}`);
+    values.push(filters.minSalary);
+  }
+
+  if (filters.hasEquity) {
+    clauses.push(`equity <> $${idx++}`);
+    values.push(0);
+  }
+
+  const whereClause =
+    clauses.length > 0 ? ' WHERE ' + clauses.join(' AND ') : '';
+
+  return { whereClause, values };
+}
+
 // ==================================================
 
-module.exports = { sqlForPartialUpdate, sqlWhereClauseForGetCompanies };
+module.exports = {
+  sqlForPartialUpdate,
+  sqlWhereClauseForGetCompanies,
+  sqlWhereClauseForGetJobs,
+};

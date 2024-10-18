@@ -88,10 +88,34 @@ describe('create', function () {
 describe('findAll', function () {
   test('works: no filter', async function () {
     // Act
-    const result = await Job.findAll();
+    const result = await Job.findAll({});
 
     // Assert
     expect(result).toEqual(jobs);
+  });
+
+  test.each([
+    [{ title: '2' }, [jobs[1]]],
+    [{ title: 'J' }, jobs],
+    [{ minSalary: 10 }, [jobs[1], jobs[2]]],
+    [{ hasEquity: true }, [jobs[0], jobs[1]]],
+  ])('works: one filter, case %#', async (filters, expected) => {
+    // Act
+    const result = await Job.findAll(filters);
+
+    // Assert
+    expect(result).toEqual(expected);
+  });
+
+  test('works: multiple filters', async () => {
+    // Arrange
+    const filters = { title: 'J', minSalary: 1000, hasEquity: false };
+
+    // Act
+    const result = await Job.findAll(filters);
+
+    // Assert
+    expect(result).toEqual([jobs[2]]);
   });
 });
 

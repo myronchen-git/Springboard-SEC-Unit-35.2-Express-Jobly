@@ -7,7 +7,10 @@ const express = require('express');
 
 const { BadRequestError } = require('../expressError');
 const { ensureLoggedIn, ensureAdmin } = require('../middleware/auth');
-const { convertJobId } = require('../middleware/jobs');
+const {
+  convertJobId,
+  convertGetAllJobsQueryParameters,
+} = require('../middleware/jobs');
 
 const Job = require('../models/job');
 
@@ -47,16 +50,25 @@ router.post('/', ensureLoggedIn, ensureAdmin, async function (req, res, next) {
  * GET /
  * => { jobs: [{ id, title, salary, equity, companyHandle }, ...] }
  *
+ * Can filter on provided search filters:
+ * - title (will find case-insensitive, partial matches)
+ * - minSalary
+ * - hasEquity
+ *
  * Authorization required: none
  */
-router.get('/', async function (req, res, next) {
-  try {
-    const jobs = await Job.findAll();
-    return res.json({ jobs });
-  } catch (err) {
-    return next(err);
+router.get(
+  '/',
+  convertGetAllJobsQueryParameters,
+  async function (req, res, next) {
+    try {
+      const jobs = await Job.findAll(req.query);
+      return res.json({ jobs });
+    } catch (err) {
+      return next(err);
+    }
   }
-});
+);
 
 /**
  * GET /:id

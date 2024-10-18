@@ -1,9 +1,15 @@
 'use strict';
 
-const { sqlForPartialUpdate, sqlWhereClauseForGetCompanies } = require('./sql');
+const {
+  sqlForPartialUpdate,
+  sqlWhereClauseForGetCompanies,
+  sqlWhereClauseForGetJobs,
+} = require('./sql');
 const { BadRequestError } = require('../expressError');
 
 // ==================================================
+
+/************************************** sqlForPartialUpdate */
 
 describe('sqlForPartialUpdate', () => {
   test('Creates SQL String and outputs associated values.', () => {
@@ -73,6 +79,8 @@ describe('sqlForPartialUpdate', () => {
   });
 });
 
+/************************************** sqlWhereClauseForGetCompanies */
+
 describe('sqlWhereClauseForGetCompanies', () => {
   test.each([
     [{}, { whereClause: '', values: [] }],
@@ -131,4 +139,52 @@ describe('sqlWhereClauseForGetCompanies', () => {
       BadRequestError
     );
   });
+});
+
+/************************************** sqlWhereClauseForGetJobs */
+
+describe('sqlWhereClauseForGetJobs', () => {
+  test.each([
+    [{}, { whereClause: '', values: [] }],
+    [
+      { title: 'dev' },
+      { whereClause: ' WHERE title ILIKE $1', values: ['%dev%'] },
+    ],
+    [{ minSalary: 10 }, { whereClause: ' WHERE salary >= $1', values: [10] }],
+    [{ hasEquity: true }, { whereClause: ' WHERE equity <> $1', values: [0] }],
+    [
+      { title: 'dev', minSalary: 10, hasEquity: false },
+      {
+        whereClause: ' WHERE title ILIKE $1 AND salary >= $2',
+        values: ['%dev%', 10],
+      },
+    ],
+  ])(
+    'Outputs the correct SQL String to use in the WHERE clause for test case %#.',
+    (filters, expected) => {
+      // Act
+      const result = sqlWhereClauseForGetJobs(filters);
+
+      // Assert
+      expect(result).toEqual(expected);
+    }
+  );
+
+  test.each([
+    [{ id: 9 }, { whereClause: '', values: [] }],
+    [{ companyHandle: 'c1' }, { whereClause: '', values: [] }],
+    [
+      { id: 9, title: 'dev', companyHandle: 'c1' },
+      { whereClause: ' WHERE title ILIKE $1', values: ['%dev%'] },
+    ],
+  ])(
+    'Does not filter other company properties.  Test case: %#.',
+    (filters, expected) => {
+      // Act
+      const result = sqlWhereClauseForGetJobs(filters);
+
+      // Assert
+      expect(result).toEqual(expected);
+    }
+  );
 });
