@@ -120,21 +120,26 @@ class User {
 
   /** Given a username, return data about user.
    *
-   * Returns { username, first_name, last_name, is_admin, jobs }
-   *   where jobs is { id, title, company_handle, company_name, state }
+   * Returns { username, firstName, lastName, isAdmin, jobs }
+   *   where jobs is [ jobId, jobId, ... ].
    *
    * Throws NotFoundError if user not found.
    **/
 
   static async get(username) {
     const userRes = await db.query(
-      `SELECT username,
-                  first_name AS "firstName",
-                  last_name AS "lastName",
-                  email,
-                  is_admin AS "isAdmin"
-           FROM users
-           WHERE username = $1`,
+      `SELECT u.username,
+              u.first_name AS "firstName",
+              u.last_name AS "lastName",
+              u.email,
+              u.is_admin AS "isAdmin",
+              COALESCE(
+                json_agg(a.job_id) FILTER (WHERE a.job_id IS NOT NULL
+              ), '[]') AS jobs
+      FROM users AS u
+      LEFT JOIN applications AS a ON u.username = a.username
+      WHERE u.username = $1
+      GROUP BY u.username`,
       [username]
     );
 
@@ -204,6 +209,34 @@ class User {
     const user = result.rows[0];
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
+  }
+
+  /**
+   * Has a user apply to a job.  This currently only associates a user and a
+   * job together.
+   *
+   * @param {String} username Username that is applying to the job.
+   * @param {Number} jobId ID of the job being applied to.
+   * @returns {Object} { username, jobId }
+   * @throws NotFoundError - If user or job is not found.
+   */
+  static async applyJob(username, jobId) {
+    let application;
+    try {
+      const applicationsResult = await db.query(
+        `INSERT INTO applications (username, job_id)
+        VALUES ($1, $2)
+        RETURNING username, job_id AS "jobId"`,
+        [username, jobId]
+      );
+      application = applicationsResult.rows[0];
+    } catch (err) {
+      if (err.code === '23503') {
+        throw new NotFoundError(`No user: ${username}; or no job: ${jobId}.`);
+      }
+    }
+
+    return application;
   }
 }
 

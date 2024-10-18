@@ -10,6 +10,7 @@ const {
   ensureAdmin,
   ensureAdminOrSelf,
 } = require('../middleware/auth');
+const { convertJobId } = require('../middleware/jobs');
 const { BadRequestError } = require('../expressError');
 const User = require('../models/user');
 const { createToken } = require('../helpers/tokens');
@@ -29,7 +30,7 @@ const router = express.Router();
  * This returns the newly created user and an authentication token for them:
  *  {user: { username, firstName, lastName, email, isAdmin }, token }
  *
- * Authorization required: login
+ * Authorization required: login, admin
  **/
 
 router.post('/', ensureLoggedIn, ensureAdmin, async function (req, res, next) {
@@ -52,7 +53,7 @@ router.post('/', ensureLoggedIn, ensureAdmin, async function (req, res, next) {
  *
  * Returns list of all users.
  *
- * Authorization required: login
+ * Authorization required: login, admin
  **/
 
 router.get('/', ensureLoggedIn, ensureAdmin, async function (req, res, next) {
@@ -66,9 +67,10 @@ router.get('/', ensureLoggedIn, ensureAdmin, async function (req, res, next) {
 
 /** GET /[username] => { user }
  *
- * Returns { username, firstName, lastName, isAdmin }
+ * Returns { username, firstName, lastName, isAdmin, jobs }
+ *   where jobs is [ jobId, jobId, ... ].
  *
- * Authorization required: login
+ * Authorization required: login, admin or self
  **/
 
 router.get(
@@ -92,7 +94,7 @@ router.get(
  *
  * Returns { username, firstName, lastName, email, isAdmin }
  *
- * Authorization required: login
+ * Authorization required: login, admin or self
  **/
 
 router.patch(
@@ -117,7 +119,7 @@ router.patch(
 
 /** DELETE /[username]  =>  { deleted: username }
  *
- * Authorization required: login
+ * Authorization required: login, admin or self
  **/
 
 router.delete(
@@ -128,6 +130,28 @@ router.delete(
     try {
       await User.remove(req.params.username);
       return res.json({ deleted: req.params.username });
+    } catch (err) {
+      return next(err);
+    }
+  }
+);
+
+/** POST /:username/jobs/:id
+ * => { applied: jobId }
+ *
+ * Has a user apply to a job.
+ *
+ * Authorization required: login, admin or self
+ */
+router.post(
+  '/:username/jobs/:id',
+  ensureLoggedIn,
+  ensureAdminOrSelf,
+  convertJobId,
+  async function (req, res, next) {
+    try {
+      const { jobId } = await User.applyJob(req.params.username, req.params.id);
+      return res.status(201).json({ applied: jobId });
     } catch (err) {
       return next(err);
     }

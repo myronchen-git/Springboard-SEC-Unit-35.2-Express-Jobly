@@ -134,14 +134,37 @@ describe('findAll', function () {
 /************************************** get */
 
 describe('get', function () {
-  test('works', async function () {
+  test('works: has jobs', async function () {
+    // Arrange
+    await User.applyJob('u1', 1);
+    await User.applyJob('u1', 2);
+
+    // Act
     let user = await User.get('u1');
+
+    // Assert
     expect(user).toEqual({
       username: 'u1',
       firstName: 'U1F',
       lastName: 'U1L',
       email: 'u1@email.com',
       isAdmin: false,
+      jobs: [1, 2],
+    });
+  });
+
+  test('works: no jobs', async function () {
+    // Act
+    let user = await User.get('u1');
+
+    // Assert
+    expect(user).toEqual({
+      username: 'u1',
+      firstName: 'U1F',
+      lastName: 'U1L',
+      email: 'u1@email.com',
+      isAdmin: false,
+      jobs: [],
     });
   });
 
@@ -227,5 +250,45 @@ describe('remove', function () {
     } catch (err) {
       expect(err instanceof NotFoundError).toBeTruthy();
     }
+  });
+});
+
+/************************************** applyJob */
+
+describe('applyJob', function () {
+  test('Applies user to a job.', async function () {
+    // Arrange
+    const username = 'u1';
+    const jobId = 1;
+
+    // Act
+    const result = await User.applyJob(username, jobId);
+
+    // Assert
+    expect(result).toEqual({ username, jobId });
+
+    const applicationsResult = await db.query(
+      `SELECT * FROM applications WHERE username = $1 AND job_id = $2`,
+      [username, jobId]
+    );
+    expect(applicationsResult.rowCount).toBe(1);
+  });
+
+  test('not found if no such user', async function () {
+    // Arrange
+    const username = 'nope';
+    const jobId = 1;
+
+    // Act / Assert
+    await expect(User.applyJob(username, jobId)).rejects.toThrow(NotFoundError);
+  });
+
+  test('not found if no such job', async function () {
+    // Arrange
+    const username = 'u1';
+    const jobId = 99;
+
+    // Act / Assert
+    await expect(User.applyJob(username, jobId)).rejects.toThrow(NotFoundError);
   });
 });
