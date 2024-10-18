@@ -265,7 +265,7 @@ describe('applyJob', function () {
     const result = await User.applyJob(username, jobId);
 
     // Assert
-    expect(result).toEqual({ username, jobId });
+    expect(result).toEqual({ username, jobId, status: 'applied' });
 
     const applicationsResult = await db.query(
       `SELECT * FROM applications WHERE username = $1 AND job_id = $2`,

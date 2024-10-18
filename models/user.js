@@ -217,16 +217,16 @@ class User {
    *
    * @param {String} username Username that is applying to the job.
    * @param {Number} jobId ID of the job being applied to.
-   * @returns {Object} { username, jobId }
+   * @returns {Object} { username, jobId, status }
    * @throws NotFoundError - If user or job is not found.
    */
   static async applyJob(username, jobId) {
     let application;
     try {
       const applicationsResult = await db.query(
-        `INSERT INTO applications (username, job_id)
-        VALUES ($1, $2)
-        RETURNING username, job_id AS "jobId"`,
+        `INSERT INTO applications (username, job_id, status)
+        VALUES ($1, $2, 'applied')
+        RETURNING username, job_id AS "jobId", status`,
         [username, jobId]
       );
       application = applicationsResult.rows[0];
