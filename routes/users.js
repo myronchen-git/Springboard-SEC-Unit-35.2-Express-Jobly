@@ -4,6 +4,7 @@
 
 const jsonschema = require('jsonschema');
 const express = require('express');
+const passwordGen = require('generate-password');
 
 const {
   ensureLoggedIn,
@@ -35,6 +36,8 @@ const router = express.Router();
 
 router.post('/', ensureLoggedIn, ensureAdmin, async function (req, res, next) {
   try {
+    req.body.password = passwordGen.generate({ numbers: true, symbols: true });
+
     const validator = jsonschema.validate(req.body, userNewSchema);
     if (!validator.valid) {
       const errs = validator.errors.map((e) => e.stack);
