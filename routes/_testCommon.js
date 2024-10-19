@@ -8,6 +8,30 @@ const { createToken } = require('../helpers/tokens');
 
 // ==================================================
 
+const users = Object.freeze([
+  Object.freeze({
+    username: 'u1',
+    firstName: 'U1F',
+    lastName: 'U1L',
+    email: 'user1@user.com',
+    isAdmin: true,
+  }),
+  Object.freeze({
+    username: 'u2',
+    firstName: 'U2F',
+    lastName: 'U2L',
+    email: 'user2@user.com',
+    isAdmin: false,
+  }),
+  Object.freeze({
+    username: 'u3',
+    firstName: 'U3F',
+    lastName: 'U3L',
+    email: 'user3@user.com',
+    isAdmin: false,
+  }),
+]);
+
 const jobs = Object.freeze([
   Object.freeze({
     id: expect.any(Number),
@@ -72,49 +96,19 @@ async function commonBeforeAll() {
     logoUrl: 'http://c3.img',
   });
 
-  await User.register({
-    username: 'u1',
-    firstName: 'U1F',
-    lastName: 'U1L',
-    email: 'user1@user.com',
-    password: 'password1',
-    isAdmin: true,
-  });
-  await User.register({
-    username: 'u2',
-    firstName: 'U2F',
-    lastName: 'U2L',
-    email: 'user2@user.com',
-    password: 'password2',
-    isAdmin: false,
-  });
-  await User.register({
-    username: 'u3',
-    firstName: 'U3F',
-    lastName: 'U3L',
-    email: 'user3@user.com',
-    password: 'password3',
-    isAdmin: false,
-  });
+  for (const [index, user] of users.entries()) {
+    await User.register({
+      ...user,
+      password: `password${index + 1}`,
+    });
+  }
 
-  await Job.create({
-    title: 'j1',
-    salary: 0,
-    equity: 1.0,
-    companyHandle: 'c1',
-  });
-  await Job.create({
-    title: 'j2',
-    salary: 100,
-    equity: 0.5,
-    companyHandle: 'c1',
-  });
-  await Job.create({
-    title: 'j3',
-    salary: 1000,
-    equity: 0.0,
-    companyHandle: 'c2',
-  });
+  for (const job of jobs) {
+    const jobCopy = { ...job };
+    delete jobCopy.id;
+
+    await Job.create(jobCopy);
+  }
 
   await db.query(
     `INSERT INTO technologies (name)
@@ -163,5 +157,6 @@ module.exports = {
   commonAfterAll,
   u1Token,
   u2Token,
+  users,
   jobs,
 };

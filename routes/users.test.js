@@ -13,6 +13,7 @@ const {
   commonAfterAll,
   u1Token,
   u2Token,
+  users,
   jobs,
 } = require('./_testCommon');
 
@@ -26,24 +27,26 @@ afterAll(commonAfterAll);
 /************************************** POST /users */
 
 describe('POST /users', function () {
+  const newUser = Object.freeze({
+    username: 'u-new',
+    firstName: 'First-new',
+    lastName: 'Last-newL',
+    email: 'new@email.com',
+    isAdmin: null,
+  });
+
   test('works for admins: create non-admin', async function () {
     const resp = await request(app)
       .post('/users')
       .send({
-        username: 'u-new',
-        firstName: 'First-new',
-        lastName: 'Last-newL',
-        email: 'new@email.com',
+        ...newUser,
         isAdmin: false,
       })
       .set('authorization', `Bearer ${u1Token}`);
     expect(resp.statusCode).toEqual(201);
     expect(resp.body).toEqual({
       user: {
-        username: 'u-new',
-        firstName: 'First-new',
-        lastName: 'Last-newL',
-        email: 'new@email.com',
+        ...newUser,
         isAdmin: false,
       },
       token: expect.any(String),
@@ -54,20 +57,14 @@ describe('POST /users', function () {
     const resp = await request(app)
       .post('/users')
       .send({
-        username: 'u-new',
-        firstName: 'First-new',
-        lastName: 'Last-newL',
-        email: 'new@email.com',
+        ...newUser,
         isAdmin: true,
       })
       .set('authorization', `Bearer ${u1Token}`);
     expect(resp.statusCode).toEqual(201);
     expect(resp.body).toEqual({
       user: {
-        username: 'u-new',
-        firstName: 'First-new',
-        lastName: 'Last-newL',
-        email: 'new@email.com',
+        ...newUser,
         isAdmin: true,
       },
       token: expect.any(String),
@@ -75,13 +72,12 @@ describe('POST /users', function () {
   });
 
   test('unauth for anon', async function () {
-    const resp = await request(app).post('/users').send({
-      username: 'u-new',
-      firstName: 'First-new',
-      lastName: 'Last-newL',
-      email: 'new@email.com',
-      isAdmin: true,
-    });
+    const resp = await request(app)
+      .post('/users')
+      .send({
+        ...newUser,
+        isAdmin: true,
+      });
     expect(resp.statusCode).toEqual(401);
   });
 
@@ -89,10 +85,7 @@ describe('POST /users', function () {
     // Arrange
     const url = '/users';
     const body = {
-      username: 'u-new',
-      firstName: 'First-new',
-      lastName: 'Last-newL',
-      email: 'new@email.com',
+      ...newUser,
       isAdmin: true,
     };
 
@@ -120,9 +113,7 @@ describe('POST /users', function () {
     const resp = await request(app)
       .post('/users')
       .send({
-        username: 'u-new',
-        firstName: 'First-new',
-        lastName: 'Last-newL',
+        ...newUser,
         email: 'not-an-email',
         isAdmin: true,
       })
@@ -138,31 +129,7 @@ describe('GET /users', function () {
     const resp = await request(app)
       .get('/users')
       .set('authorization', `Bearer ${u1Token}`);
-    expect(resp.body).toEqual({
-      users: [
-        {
-          username: 'u1',
-          firstName: 'U1F',
-          lastName: 'U1L',
-          email: 'user1@user.com',
-          isAdmin: true,
-        },
-        {
-          username: 'u2',
-          firstName: 'U2F',
-          lastName: 'U2L',
-          email: 'user2@user.com',
-          isAdmin: false,
-        },
-        {
-          username: 'u3',
-          firstName: 'U3F',
-          lastName: 'U3L',
-          email: 'user3@user.com',
-          isAdmin: false,
-        },
-      ],
-    });
+    expect(resp.body).toEqual({ users });
   });
 
   test('unauth for anon', async function () {
@@ -211,11 +178,7 @@ describe('GET /users/:username', function () {
     // Assert
     expect(resp.body).toEqual({
       user: {
-        username: 'u1',
-        firstName: 'U1F',
-        lastName: 'U1L',
-        email: 'user1@user.com',
-        isAdmin: true,
+        ...users[0],
         jobs: [1, 2],
       },
     });
@@ -227,11 +190,7 @@ describe('GET /users/:username', function () {
       .set('authorization', `Bearer ${u1Token}`);
     expect(resp.body).toEqual({
       user: {
-        username: 'u1',
-        firstName: 'U1F',
-        lastName: 'U1L',
-        email: 'user1@user.com',
-        isAdmin: true,
+        ...users[0],
         jobs: [],
       },
     });
@@ -249,11 +208,7 @@ describe('GET /users/:username', function () {
     // Assert
     expect(resp.body).toEqual({
       user: {
-        username: 'u2',
-        firstName: 'U2F',
-        lastName: 'U2L',
-        email: 'user2@user.com',
-        isAdmin: false,
+        ...users[1],
         jobs: [],
       },
     });
@@ -297,11 +252,8 @@ describe('PATCH /users/:username', () => {
       .set('authorization', `Bearer ${u1Token}`);
     expect(resp.body).toEqual({
       user: {
-        username: 'u1',
+        ...users[0],
         firstName: 'New',
-        lastName: 'U1L',
-        email: 'user1@user.com',
-        isAdmin: true,
       },
     });
   });
@@ -321,11 +273,8 @@ describe('PATCH /users/:username', () => {
     // Assert
     expect(resp.body).toEqual({
       user: {
-        username: 'u2',
+        ...users[1],
         firstName: 'New',
-        lastName: 'U2L',
-        email: 'user2@user.com',
-        isAdmin: false,
       },
     });
   });
@@ -381,13 +330,7 @@ describe('PATCH /users/:username', () => {
       })
       .set('authorization', `Bearer ${u1Token}`);
     expect(resp.body).toEqual({
-      user: {
-        username: 'u1',
-        firstName: 'U1F',
-        lastName: 'U1L',
-        email: 'user1@user.com',
-        isAdmin: true,
-      },
+      user: users[0],
     });
     const isSuccessful = await User.authenticate('u1', 'new-password');
     expect(isSuccessful).toBeTruthy();

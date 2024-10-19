@@ -28,13 +28,7 @@ afterAll(commonAfterAll);
 describe('authenticate', function () {
   test('works', async function () {
     const user = await User.authenticate('u1', 'password1');
-    expect(user).toEqual({
-      username: 'u1',
-      firstName: 'U1F',
-      lastName: 'U1L',
-      email: 'u1@email.com',
-      isAdmin: false,
-    });
+    expect(user).toEqual(users[0]);
   });
 
   test('unauth if no such user', async function () {
@@ -113,23 +107,8 @@ describe('register', function () {
 
 describe('findAll', function () {
   test('works', async function () {
-    const users = await User.findAll();
-    expect(users).toEqual([
-      {
-        username: 'u1',
-        firstName: 'U1F',
-        lastName: 'U1L',
-        email: 'u1@email.com',
-        isAdmin: false,
-      },
-      {
-        username: 'u2',
-        firstName: 'U2F',
-        lastName: 'U2L',
-        email: 'u2@email.com',
-        isAdmin: false,
-      },
-    ]);
+    const results = await User.findAll();
+    expect(results).toEqual(users);
   });
 });
 
@@ -146,11 +125,7 @@ describe('get', function () {
 
     // Assert
     expect(user).toEqual({
-      username: 'u1',
-      firstName: 'U1F',
-      lastName: 'U1L',
-      email: 'u1@email.com',
-      isAdmin: false,
+      ...users[0],
       jobs: [1, 2],
     });
   });
@@ -161,11 +136,7 @@ describe('get', function () {
 
     // Assert
     expect(user).toEqual({
-      username: 'u1',
-      firstName: 'U1F',
-      lastName: 'U1L',
-      email: 'u1@email.com',
-      isAdmin: false,
+      ...users[0],
       jobs: [],
     });
   });
@@ -202,13 +173,7 @@ describe('update', function () {
     let job = await User.update('u1', {
       password: 'new',
     });
-    expect(job).toEqual({
-      username: 'u1',
-      firstName: 'U1F',
-      lastName: 'U1L',
-      email: 'u1@email.com',
-      isAdmin: false,
-    });
+    expect(job).toEqual(users[0]);
     const found = await db.query("SELECT * FROM users WHERE username = 'u1'");
     expect(found.rows.length).toEqual(1);
     expect(found.rows[0].password.startsWith('$2b$')).toEqual(true);

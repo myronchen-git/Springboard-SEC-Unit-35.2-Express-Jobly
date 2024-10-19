@@ -12,6 +12,7 @@ const {
   commonAfterAll,
   u1Token,
   u2Token,
+  jobs,
 } = require('./_testCommon');
 
 // ==================================================
@@ -20,31 +21,6 @@ beforeAll(commonBeforeAll);
 beforeEach(commonBeforeEach);
 afterEach(commonAfterEach);
 afterAll(commonAfterAll);
-
-// from _testCommon.js
-const jobs = Object.freeze([
-  Object.freeze({
-    id: expect.any(Number),
-    title: 'j1',
-    salary: 0,
-    equity: 1.0,
-    companyHandle: 'c1',
-  }),
-  Object.freeze({
-    id: expect.any(Number),
-    title: 'j2',
-    salary: 100,
-    equity: 0.5,
-    companyHandle: 'c1',
-  }),
-  Object.freeze({
-    id: expect.any(Number),
-    title: 'j3',
-    salary: 1000,
-    equity: 0.0,
-    companyHandle: 'c2',
-  }),
-]);
 
 /************************************** POST /jobs */
 

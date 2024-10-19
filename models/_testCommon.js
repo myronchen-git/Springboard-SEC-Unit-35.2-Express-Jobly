@@ -86,6 +86,7 @@ async function commonAfterAll() {
   await db.end();
 }
 
+// ensure that this matches insertion values above
 const users = Object.freeze([
   Object.freeze({
     username: 'u1',
@@ -103,6 +104,7 @@ const users = Object.freeze([
   }),
 ]);
 
+// ensure that this matches insertion values above
 const jobs = Object.freeze([
   Object.freeze({
     id: expect.any(Number),
