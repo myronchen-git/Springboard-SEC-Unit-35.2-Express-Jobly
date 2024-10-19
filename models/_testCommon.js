@@ -14,6 +14,14 @@ async function commonBeforeAll() {
   await db.query('DELETE FROM users');
   // noinspection SqlWithoutWhere
   await db.query('TRUNCATE TABLE jobs RESTART IDENTITY CASCADE');
+  // noinspection SqlWithoutWhere
+  await db.query('TRUNCATE TABLE applications CASCADE');
+  // noinspection SqlWithoutWhere
+  await db.query('TRUNCATE TABLE technologies RESTART IDENTITY CASCADE');
+  // noinspection SqlWithoutWhere
+  await db.query('TRUNCATE TABLE jobs_technologies CASCADE');
+  // noinspection SqlWithoutWhere
+  await db.query('TRUNCATE TABLE users_technologies CASCADE');
 
   await db.query(`
     INSERT INTO companies(handle, name, num_employees, description, logo_url)
@@ -43,6 +51,27 @@ async function commonBeforeAll() {
             ('j2', 100, 0.5, 'c1'),
             ('j3', 1000, 0.0, 'c2')`
   );
+
+  await db.query(
+    `INSERT INTO technologies (name)
+    VALUES ('t1'),
+            ('t2'),
+            ('t3')`
+  );
+
+  await db.query(
+    `INSERT INTO jobs_technologies (job_id, tech_id)
+    VALUES (1, 1),
+            (1, 2),
+            (1, 3),
+            (2, 1)`
+  );
+
+  await db.query(
+    `INSERT INTO users_technologies (username, tech_id)
+    VALUES ('u1', 1),
+            ('u1', 2)`
+  );
 }
 
 async function commonBeforeEach() {
@@ -57,6 +86,47 @@ async function commonAfterAll() {
   await db.end();
 }
 
+const users = Object.freeze([
+  Object.freeze({
+    username: 'u1',
+    firstName: 'U1F',
+    lastName: 'U1L',
+    email: 'u1@email.com',
+    isAdmin: false,
+  }),
+  Object.freeze({
+    username: 'u2',
+    firstName: 'U2F',
+    lastName: 'U2L',
+    email: 'u2@email.com',
+    isAdmin: false,
+  }),
+]);
+
+const jobs = Object.freeze([
+  Object.freeze({
+    id: expect.any(Number),
+    title: 'j1',
+    salary: 0,
+    equity: 1.0,
+    companyHandle: 'c1',
+  }),
+  Object.freeze({
+    id: expect.any(Number),
+    title: 'j2',
+    salary: 100,
+    equity: 0.5,
+    companyHandle: 'c1',
+  }),
+  Object.freeze({
+    id: expect.any(Number),
+    title: 'j3',
+    salary: 1000,
+    equity: 0.0,
+    companyHandle: 'c2',
+  }),
+]);
+
 // ==================================================
 
 module.exports = {
@@ -64,4 +134,6 @@ module.exports = {
   commonBeforeEach,
   commonAfterEach,
   commonAfterAll,
+  users,
+  jobs,
 };

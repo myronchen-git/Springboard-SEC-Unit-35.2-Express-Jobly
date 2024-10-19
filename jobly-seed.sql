@@ -392,3 +392,13 @@ VALUES (33, 1),
         (177, 4),
         (177, 5),
         (177, 6);
+
+INSERT INTO users_technologies (username, tech_id)
+VALUES ('testuser', 1),
+        ('testuser', 2),
+        ('testadmin', 1),
+        ('testadmin', 2),
+        ('testadmin', 3),
+        ('testadmin', 4),
+        ('testadmin', 5),
+        ('testadmin', 6);

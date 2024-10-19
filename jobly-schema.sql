@@ -47,3 +47,10 @@ CREATE TABLE jobs_technologies (
   tech_id INTEGER
     REFERENCES technologies ON DELETE CASCADE
 );
+
+CREATE TABLE users_technologies (
+  username VARCHAR(25)
+    REFERENCES users ON DELETE CASCADE,
+  tech_id INTEGER
+    REFERENCES technologies ON DELETE CASCADE
+);

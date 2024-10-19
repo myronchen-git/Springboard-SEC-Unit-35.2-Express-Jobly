@@ -13,6 +13,7 @@ const {
   commonAfterAll,
   u1Token,
   u2Token,
+  jobs,
 } = require('./_testCommon');
 
 // ==================================================
@@ -517,6 +518,99 @@ describe('POST /:username/jobs/:id', function () {
     // Act
     const resp = await request(app)
       .post(url)
+      .set('authorization', `Bearer ${u1Token}`);
+
+    // Assert
+    expect(resp.statusCode).toEqual(404);
+  });
+});
+
+/************************************** GET /:username/matchingJobs */
+
+describe('GET /:username/matchingJobs', function () {
+  test('works for admins', async function () {
+    // Arrange
+    const url = '/users/u2/matchingJobs';
+
+    // Act
+    const resp = await request(app)
+      .get(url)
+      .set('authorization', `Bearer ${u1Token}`);
+
+    // Assert
+    expect(resp.statusCode).toEqual(200);
+    expect(resp.body).toEqual({
+      jobs: [
+        { ...jobs[0], technologies: ['t1'] },
+        { ...jobs[1], technologies: ['t1'] },
+      ],
+    });
+  });
+
+  test('works for non-admin specified user', async function () {
+    // Arrange
+    const url = '/users/u2/matchingJobs';
+
+    // Act
+    const resp = await request(app)
+      .get(url)
+      .set('authorization', `Bearer ${u2Token}`);
+
+    // Assert
+    expect(resp.statusCode).toEqual(200);
+    expect(resp.body).toEqual({
+      jobs: [
+        { ...jobs[0], technologies: ['t1'] },
+        { ...jobs[1], technologies: ['t1'] },
+      ],
+    });
+  });
+
+  test('Returns empty list if there are no matching jobs.', async function () {
+    // Arrange
+    const url = '/users/u3/matchingJobs';
+
+    // Act
+    const resp = await request(app)
+      .get(url)
+      .set('authorization', `Bearer ${u1Token}`);
+
+    // Assert
+    expect(resp.statusCode).toEqual(200);
+    expect(resp.body).toEqual({ jobs: [] });
+  });
+
+  test('unauth for anon', async function () {
+    // Arrange
+    const url = '/users/u1/matchingJobs';
+
+    // Act
+    const resp = await request(app).get(url);
+
+    // Assert
+    expect(resp.statusCode).toEqual(401);
+  });
+
+  test('forbidden if not admin or specified user', async function () {
+    // Arrange
+    const url = '/users/u1/matchingJobs';
+
+    // Act
+    const resp = await request(app)
+      .get(url)
+      .set('authorization', `Bearer ${u2Token}`);
+
+    // Assert
+    expect(resp.statusCode).toEqual(403);
+  });
+
+  test('not found if no such user', async function () {
+    // Arrange
+    const url = '/users/nope/matchingJobs';
+
+    // Act
+    const resp = await request(app)
+      .get(url)
       .set('authorization', `Bearer ${u1Token}`);
 
     // Assert

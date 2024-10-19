@@ -8,6 +8,32 @@ const { createToken } = require('../helpers/tokens');
 
 // ==================================================
 
+const jobs = Object.freeze([
+  Object.freeze({
+    id: expect.any(Number),
+    title: 'j1',
+    salary: 0,
+    equity: 1.0,
+    companyHandle: 'c1',
+  }),
+  Object.freeze({
+    id: expect.any(Number),
+    title: 'j2',
+    salary: 100,
+    equity: 0.5,
+    companyHandle: 'c1',
+  }),
+  Object.freeze({
+    id: expect.any(Number),
+    title: 'j3',
+    salary: 1000,
+    equity: 0.0,
+    companyHandle: 'c2',
+  }),
+]);
+
+// --------------------------------------------------
+
 async function commonBeforeAll() {
   // noinspection SqlWithoutWhere
   await db.query('DELETE FROM users');
@@ -15,6 +41,14 @@ async function commonBeforeAll() {
   await db.query('DELETE FROM companies');
   // noinspection SqlWithoutWhere
   await db.query('TRUNCATE TABLE jobs RESTART IDENTITY CASCADE');
+  // noinspection SqlWithoutWhere
+  await db.query('TRUNCATE TABLE applications CASCADE');
+  // noinspection SqlWithoutWhere
+  await db.query('TRUNCATE TABLE technologies RESTART IDENTITY CASCADE');
+  // noinspection SqlWithoutWhere
+  await db.query('TRUNCATE TABLE jobs_technologies CASCADE');
+  // noinspection SqlWithoutWhere
+  await db.query('TRUNCATE TABLE users_technologies CASCADE');
 
   await Company.create({
     handle: 'c1',
@@ -81,6 +115,28 @@ async function commonBeforeAll() {
     equity: 0.0,
     companyHandle: 'c2',
   });
+
+  await db.query(
+    `INSERT INTO technologies (name)
+    VALUES ('t1'),
+            ('t2'),
+            ('t3')`
+  );
+
+  await db.query(
+    `INSERT INTO jobs_technologies (job_id, tech_id)
+    VALUES (1, 1),
+            (1, 2),
+            (1, 3),
+            (2, 1)`
+  );
+
+  await db.query(
+    `INSERT INTO users_technologies (username, tech_id)
+    VALUES ('u1', 1),
+            ('u1', 2),
+            ('u2', 1)`
+  );
 }
 
 async function commonBeforeEach() {
@@ -107,4 +163,5 @@ module.exports = {
   commonAfterAll,
   u1Token,
   u2Token,
+  jobs,
 };

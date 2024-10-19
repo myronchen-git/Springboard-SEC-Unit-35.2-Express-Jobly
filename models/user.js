@@ -238,6 +238,53 @@ class User {
 
     return application;
   }
+
+  /**
+   * Gets a list of jobs that uses the same technologies as the specified
+   * user.  Each job contains the specific shared technologies.
+   *
+   * @param {String} username The name of the user to match jobs against.
+   * @returns {Array} [
+   *   { id, title, salary, equity, companyHandle, technologies },
+   *   ...
+   * ]
+   * @throws NotFoundError - If user does not exist.
+   */
+  static async matchJobs(username) {
+    const usersResult = await db.query(
+      `SELECT username
+      FROM users
+      WHERE username = $1`,
+      [username]
+    );
+
+    if (usersResult.rowCount === 0)
+      throw new NotFoundError(`No user: ${username}.`);
+
+    const jobsResult = await db.query(
+      `SELECT j.id,
+              j.title,
+              j.salary,
+              j.equity,
+              j.company_handle AS "companyHandle",
+              json_agg(t.name) AS "technologies"
+      FROM users AS u
+      JOIN users_technologies AS ut ON u.username = ut.username
+      JOIN jobs_technologies AS jt ON ut.tech_id = jt.tech_id
+      JOIN jobs AS j ON jt.job_id = j.id
+      JOIN technologies AS t ON ut.tech_id = t.id
+      WHERE u.username = $1
+      GROUP BY j.id`,
+      [username]
+    );
+
+    const jobs = jobsResult.rows.map((r) => {
+      if (r.equity !== null) r.equity = Number(r.equity);
+      return r;
+    });
+
+    return jobs;
+  }
 }
 
 // ==================================================

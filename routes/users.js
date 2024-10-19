@@ -161,6 +161,31 @@ router.post(
   }
 );
 
+/**
+ * GET /:username/matchingJobs
+ * => { jobs:
+ *  [{ id, title, salary, equity, companyHandle, technologies }, ...]
+ * }
+ *
+ * Returns a list of jobs that have technologies that match a specified user's
+ * technologies.
+ *
+ * Authorization required: login, admin or self
+ */
+router.get(
+  '/:username/matchingJobs',
+  ensureLoggedIn,
+  ensureAdminOrSelf,
+  async function (req, res, next) {
+    try {
+      const jobs = await User.matchJobs(req.params.username);
+      return res.json({ jobs });
+    } catch (err) {
+      return next(err);
+    }
+  }
+);
+
 // ==================================================
 
 module.exports = router;

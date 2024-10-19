@@ -12,6 +12,8 @@ const {
   commonBeforeEach,
   commonAfterEach,
   commonAfterAll,
+  users,
+  jobs,
 } = require('./_testCommon');
 
 // ==================================================
@@ -290,5 +292,42 @@ describe('applyJob', function () {
 
     // Act / Assert
     await expect(User.applyJob(username, jobId)).rejects.toThrow(NotFoundError);
+  });
+});
+
+/************************************** matchJobs */
+
+describe('matchJobs', function () {
+  test("Gets jobs that matches a user's technologies.", async function () {
+    // Arrange
+    const username = 'u1';
+
+    // Act
+    const result = await User.matchJobs(username);
+
+    // Assert
+    expect(result).toEqual([
+      { ...jobs[0], technologies: ['t1', 't2'] },
+      { ...jobs[1], technologies: ['t1'] },
+    ]);
+  });
+
+  test('Returns empty list if there are no matching jobs.', async function () {
+    // Arrange
+    const username = 'u2';
+
+    // Act
+    const result = await User.matchJobs(username);
+
+    // Assert
+    expect(result).toEqual([]);
+  });
+
+  test('not found if no such user', async function () {
+    // Arrange
+    const username = 'nope';
+
+    // Act / Assert
+    await expect(User.matchJobs(username)).rejects.toThrow(NotFoundError);
   });
 });
