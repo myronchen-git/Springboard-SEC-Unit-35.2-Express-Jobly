@@ -22,8 +22,8 @@ function convertJobId(req, res, next) {
   try {
     const id = Number(req.params.id);
 
-    if (Number.isNaN(id)) {
-      throw new BadRequestError('id is not a number.');
+    if (Number.isNaN(id) || !Number.isInteger(id) || id < 1) {
+      throw new BadRequestError('id is not a positive integer.');
     }
 
     req.params.id = id;

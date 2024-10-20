@@ -25,21 +25,23 @@ describe('convertJobId', () => {
     expect.assertions(2);
   });
 
-  test('Throws an error if ID is not valid.', () => {
-    // Arrange
-    const id = 'a';
-    const req = { params: { id } };
-    const res = {};
-    const next = function (err) {
-      expect(err instanceof BadRequestError).toBeTruthy();
-    };
+  test.each([['a'], ['1.1'], ['-1'], ['0']])(
+    'Throws an error if ID is not valid.',
+    (id) => {
+      // Arrange
+      const req = { params: { id } };
+      const res = {};
+      const next = function (err) {
+        expect(err instanceof BadRequestError).toBeTruthy();
+      };
 
-    // Act
-    convertJobId(req, res, next);
+      // Act
+      convertJobId(req, res, next);
 
-    // Assert
-    expect.assertions(1);
-  });
+      // Assert
+      expect.assertions(1);
+    }
+  );
 });
 
 /************************************** convertGetAllJobsQueryParameters */
