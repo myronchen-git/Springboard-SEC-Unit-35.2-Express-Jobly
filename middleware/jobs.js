@@ -2,7 +2,7 @@
 
 const jsonschema = require('jsonschema');
 
-const { BadRequestError } = require('../expressError');
+const { BadRequestError, ServerError } = require('../expressError');
 const jobGetAllQuerySchema = require('../schemas/jobGetAllQuery.json');
 
 // ==================================================
@@ -65,6 +65,8 @@ function convertGetAllJobsQueryParameters(req, res, next) {
         throw new BadRequestError(
           'Can not decode query parameter title from URL encoding.'
         );
+      } else {
+        throw new ServerError();
       }
     }
 

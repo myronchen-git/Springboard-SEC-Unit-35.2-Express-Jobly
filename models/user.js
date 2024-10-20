@@ -8,6 +8,7 @@ const {
   NotFoundError,
   BadRequestError,
   UnauthorizedError,
+  ServerError,
 } = require('../expressError');
 
 const { BCRYPT_WORK_FACTOR } = require('../config.js');
@@ -233,6 +234,8 @@ class User {
     } catch (err) {
       if (err.code === '23503') {
         throw new NotFoundError(`No user: ${username}; or no job: ${jobId}.`);
+      } else {
+        throw new ServerError();
       }
     }
 

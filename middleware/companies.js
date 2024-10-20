@@ -1,6 +1,6 @@
 'use strict';
 
-const { BadRequestError } = require('../expressError');
+const { BadRequestError, ServerError } = require('../expressError');
 
 // ==================================================
 
@@ -65,6 +65,8 @@ function convertGetAllCompaniesQueryParameters(req, res, next) {
           throw new BadRequestError(
             'Can not decode query parameter nameLike from URL encoding.'
           );
+        } else {
+          throw new ServerError();
         }
       }
     }

@@ -1,7 +1,11 @@
 'use strict';
 
 const db = require('../db');
-const { BadRequestError, NotFoundError } = require('../expressError');
+const {
+  BadRequestError,
+  NotFoundError,
+  ServerError,
+} = require('../expressError');
 const {
   sqlForPartialUpdate,
   sqlWhereClauseForGetJobs,
@@ -46,6 +50,8 @@ class Job {
         throw new NotFoundError(
           `Company not found for handle: ${companyHandle}.`
         );
+      } else {
+        throw new ServerError();
       }
     }
 
