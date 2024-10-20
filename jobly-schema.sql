@@ -45,12 +45,14 @@ CREATE TABLE jobs_technologies (
   job_id INTEGER
     REFERENCES jobs ON DELETE CASCADE,
   tech_id INTEGER
-    REFERENCES technologies ON DELETE CASCADE
+    REFERENCES technologies ON DELETE CASCADE,
+  PRIMARY KEY (job_id, tech_id)
 );
 
 CREATE TABLE users_technologies (
   username VARCHAR(25)
     REFERENCES users ON DELETE CASCADE,
   tech_id INTEGER
-    REFERENCES technologies ON DELETE CASCADE
+    REFERENCES technologies ON DELETE CASCADE,
+  PRIMARY KEY (username, tech_id)
 );
